@@ -3,10 +3,9 @@
   "appName": "PestWatch",
   "webDir": "frontend",
   "server": {
-    "url": "http://10.10.180.62:8000",
-    "cleartext": true,
-    "androidScheme": "http",
-    "allowNavigation": ["10.10.180.62", "*.ngrok-free.app", "*.ngrok.io"]
+    "url": "https://pestwatch-nemy.onrender.com",
+    "cleartext": false,
+    "allowNavigation": ["pestwatch-nemy.onrender.com", "*.onrender.com"]
   },
   "android": {
     "allowMixedContent": true
