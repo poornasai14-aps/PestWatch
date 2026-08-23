@@ -3,9 +3,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# OpenCV (headless) runtime libs
+# OpenCV / ultralytics runtime system libs (headless, but still needs these X/GL libs)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libglib2.0-0 libgomp1 \
+    libglib2.0-0 libgomp1 libgl1 libxcb1 libxext6 libxrender1 libsm6 \
  && rm -rf /var/lib/apt/lists/*
 
 # Install CPU-only PyTorch first (avoids pulling ~2GB CUDA), then the rest.
