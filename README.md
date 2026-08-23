@@ -1,180 +1,154 @@
-# 🐛 PestWatch — Hyper-Local Crop Pest Outbreak Early-Warning System
+# 🐛 PestWatch — Hyper-Local Crop Pest & Disease Early-Warning
 
-**Team Ctrl Freaks · LaunchPad X · Computer Vision challenge**
+> One farmer's photo helps one farmer. **PestWatch turns a hundred photos into a
+> district-level outbreak warning** — and sends it to the farms standing in the
+> pest's path, while there's still time to act.
 
-Pest identification is a solved problem — so we didn't re-solve it. We used a
-proven detector (YOLOv8) for **Layer 1**, then built the layer that actually
-helps: **Layer 2**, which pools every detection across space and time, finds
-emerging outbreak clusters, projects where the infestation spreads next, and
-**warns the farms standing in its path — while there's still time to act.**
+**🌐 Live app → https://pestwatch-nemy.onrender.com**  
+Log in with a demo account: **`officer` / `officer123`** (dashboard) or
+**`farmer` / `farmer123`** (reporter).  
+*(Free host — the first visit after it's been idle can take ~50 s to wake up, then it's fast.)*
+
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-backend-009688?logo=fastapi&logoColor=white)
+![YOLOv8](https://img.shields.io/badge/YOLOv8-detection%20%2B%20classification-purple)
+![Leaflet](https://img.shields.io/badge/Leaflet-map-199900?logo=leaflet&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-deployed-2496ED?logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
+*Team **Ctrl Freaks** · LaunchPad X · Computer Vision track*
 
 ---
 
-## Who uses it — roles & login
+## The problem
 
-PestWatch has a login system with two roles:
+A pest arrives in one corner of one field. Nobody sees it until it's a third of
+the crop — and by then it has already spread to the farms 3 km away, who will
+discover it the same way: too late. Pest **identification** is a solved problem;
+**coordination** is not. PestWatch builds the missing layer that connects one
+farmer's discovery to the farmers in the path of the spread.
 
-| Role | Who | What they see |
-|---|---|---|
-| **Officer** | Agriculture Dept. extension officer — **operates & maintains** the platform | The **district dashboard**: full outbreak map, all clusters, every alert, DBSCAN controls, farm registry, analytics, demo reset |
-| **Farmer** | A registered farm owner | Report pests (photo + location) and a personal **"Your Farm"** panel showing only the warnings that concern their own farm |
+## What it does
 
-**Demo accounts** (buttons on the login screen fill these in):
+Upload a crop photo (or video). PestWatch runs **two real vision models** and
+feeds an outbreak-intelligence layer:
 
-| Role | Username | Password |
-|---|---|---|
-| Officer | `officer` | `officer123` |
-| Farmer | `farmer` | `farmer123` (linked to *Ravi's Maize Farm*) |
+```mermaid
+flowchart LR
+  A["📷 Photo / video<br/>+ GPS + time"] --> B["🐛 YOLOv8<br/>pest detector"]
+  A --> C["🦠 YOLOv8-cls<br/>disease classifier"]
+  B --> D[("🗄️ Spatial store")]
+  D --> E["🧩 DBSCAN<br/>clustering"]
+  E --> F["🎯 Risk-radius<br/>projection"]
+  F --> G["📣 Farm alerts<br/>(who's next)"]
+  C --> H["💊 Disease +<br/>treatment advice"]
+```
 
-Farmers can also **self-register** from the login screen (creates their account
-+ registers their farm location). Auth is PBKDF2-hashed passwords + opaque
-session tokens (`backend/auth.py`), sent as `Authorization: Bearer <token>`.
-Officer-only endpoints (farm management, reset, user list) are role-gated
-server-side — a farmer token gets `403`.
+- **Layer 1 — Vision (the solved part):** a trained **YOLOv8** detector finds
+  insect pests (boxes, species, confidence, counts) and a trained **YOLOv8
+  classification** model spots leaf disease across **36 classes / 14 crops**.
+- **Layer 2 — Intelligence (what makes it ours):** every geo-tagged report is
+  pooled; **DBSCAN** finds outbreak clusters; a **risk radius** is projected
+  (species dispersal × cluster intensity × recency); and registered farms inside
+  that radius get a concrete alert — *what pest, how far, which direction, how
+  urgent, and what to do.*
 
-## Judging rubric (Track 3 — Computer Vision) — how PestWatch scores
-Run `python verify_rubric.py` for an automated 12/12 check.
+## Features
 
-| # | Criterion | How PestWatch satisfies it |
-|---|---|---|
-| 1 | **Input Stream** (image/video) | Accepts **both** — photos *and* video (frames sampled, detected, aggregated) |
-| 2 | **Vision Pipeline** (CNN/YOLO/…) | Two real models: **YOLOv8** pest detector + **YOLOv8-cls** disease classifier |
-| 3 | **Automated Understanding** | **Detection** (pests) **+ Classification** (36 leaf diseases) |
-| 4 | **Measurable Output** | Bounding boxes, species labels, confidence %, instance counts, disease labels |
-| 5 | **Technical Depth** | 2 trained models + DBSCAN clustering + risk projection + alerting + auth + geo |
-| 6 | **Reliability & Robustness** | Bad input → 400, auth → 401, role-gating → 403, model fallbacks, stable clustering |
-| 7 | **Innovation** | Layer-2 outbreak intelligence + dual pest/disease detection |
-| 8 | **Impact** | District-level early warning for farmers; fits govt. extension system |
-| 9 | **Demo** | Live map, two-model results, role-based views, video demo |
-
-## What it does — the full pipeline
-
-| Stage | What happens | Where |
-|---|---|---|
-| 1 · Capture | Farmer photographs a pest; GPS + timestamp attached | frontend |
-| 2 · Detect | **YOLOv8** finds pests → boxes, species, confidence, count | `backend/detector.py` |
-| 3 · Aggregate | Detection written to a spatial store | `backend/store.py` |
-| 4 · Cluster | **DBSCAN** per-species, rolling 7-day window → outbreak clusters | `backend/clustering.py` |
-| 5 · Project | **Risk radius** scaled by dispersal × intensity × recency | `backend/clustering.py` |
-| 5 · Alert | Farms inside the ring get a concrete 4-question warning | `backend/clustering.py` |
-
-Measurable outputs: bounding boxes, species+confidence, instance count (CV rule) ·
-detection density, cluster centroid/radius/count, farms-at-risk, alerts dispatched
-with distance & lead time (**what makes the submission ours**).
+| | |
+|---|---|
+| 🐛 **Pest detection** | Trained YOLOv8 — bounding boxes, species, confidence, counts |
+| 🦠 **Disease detection** | Trained YOLOv8-cls — 36 classes across 14 crops, with treatment advice |
+| 🗺️ **Live outbreak map** | Reports, DBSCAN clusters, risk rings, at-risk farms (Leaflet) |
+| 📣 **Early-warning alerts** | Distance, direction, lead-time, inspection tip, control measure |
+| 👨‍💼🧑‍🌾 **Two roles** | Officer (district dashboard + manage) · Farmer (report + your-farm warnings) |
+| 🎞️ **Photo *and* video input** | Video is sampled frame-by-frame and aggregated |
+| 🇬🇧🇮🇳 **English + Telugu** | Entire UI **and** the AI advice are bilingual |
+| 📲 **Installable** | PWA (Add to Home Screen) **and** a native Android APK |
+| ☁️ **Deployed** | Dockerised, live on the cloud |
 
 ## Answering the stated CV challenge — "poor lighting & complex backgrounds"
+
 `backend/augment.py` implements a training-time augmentation pipeline that
-deliberately simulates field conditions (brightness/contrast jitter, gaussian +
-motion blur, synthetic shadow injection, hue/sat shift for green-on-green
-camouflage, rotation/scale jitter, mosaic background randomisation). We train on
-ugly images so ugly images don't surprise the model. Wired into `train.py`.
+deliberately simulates field conditions — brightness/contrast jitter, gaussian &
+motion blur, synthetic shadow injection, hue/saturation shift (green-on-green
+camouflage), rotation/scale jitter, and mosaic background randomisation. We train
+on ugly images so ugly images don't surprise the model.
+
+## Tech stack
+
+**Backend** FastAPI · **Vision** YOLOv8 / PyTorch (Ultralytics) · **Image** OpenCV
+· **Clustering** scikit-learn (DBSCAN) · **Store** SQLite · **Map/UI** Leaflet +
+vanilla JS · **Mobile** Capacitor (Android) + PWA · **Deploy** Docker → Render.
 
 ---
 
-## Mobile: installable app (PWA) + Android APK
-- **PWA** — open in Chrome/Edge and "Install PestWatch"; it runs full-screen with
-  its own icon (`frontend/manifest.json` + `frontend/sw.js`).
-- **Android APK** — a Capacitor wrapper is in `android/`. Rebuild with
-  `build_apk.bat` (uses Android Studio's JDK + local SDK); output is
-  `android/app/build/outputs/apk/debug/app-debug.apk` (copied to `PestWatch.apk`).
-  The APK loads the live app from the PC over Wi-Fi — set your PC's LAN IP in
-  `capacitor.config.json` (`server.url`), run `python run.py`, keep the phone on
-  the same Wi-Fi. App icon/splash generated by `generate_app_assets.py` +
-  `npx @capacitor/assets generate --android`.
-
-## Run it
+## Run it locally
 
 ```bash
 pip install -r requirements.txt
 python run.py
 ```
 
-Open **http://127.0.0.1:8000**.
+Open **http://localhost:8000**. A demo scenario (2 outbreaks, 6 farms near
+Guntur, AP) is seeded automatically. Detector modes are auto-selected and shown
+in the header badge: `yolo-custom` (trained model in `models/best.pt`) →
+`yolo-base` → `simulated` fallback, so the app always runs.
 
-- The app **seeds a live demo** (an active Fall Armyworm outbreak NE of Guntur +
-  a Whitefly cluster SW, plus 6 registered farms) so the map is populated on
-  first load.
-- Upload any field photo, set a location (or hit **🎲 Random spot**), and
-  **Detect & Report** — the new report drops on the map, DBSCAN re-clusters, the
-  risk ring updates, and any newly-endangered farm lights up with an alert.
-
-### Test photos
-**Real pest photos** live in `samples_real/` — 36 genuine images downloaded from
-the public HuggingFace dataset [`Francesco/pests-2xlvx`](https://huggingface.co/datasets/Francesco/pests-2xlvx)
-(29 pest species, object-detection, with bounding boxes). `samples_real/labels.json`
-holds the true category + bbox for each image — this doubles as **training data**.
-Regenerate/expand with `python fetch_dataset.py`.
-
-The `samples/` folder additionally has 6 synthetic field photos (`field_maize_armyworm.jpg`,
-`field_cotton_whitefly.jpg`, `field_aphid_colony.jpg`, `field_rice_stemborer.jpg`,
-`field_chilli_thrips.jpg`, `field_healthy_leaf.jpg`). Upload any to exercise the
-full pipeline. Since there's no trained pest model yet, the **species label** is
-assigned by the base/assist detector — **pick a value in the "Species hint"
-dropdown to force a specific species** (that's also what a farmer does when they
-already know the pest). `field_healthy_leaf.jpg` may return "healthy" (no report).
-
-### Leaf-disease detection (second model)
-Alongside the pest detector, a **YOLOv8 classifier** (`models/disease_best.pt`)
-answers *"is this leaf diseased?"*. Built from PlantVillage:
-`python prepare_disease.py && python train_disease.py`. Ships covering **36
-classes across 14 crops** (apple, blueberry, cherry, corn, grape, orange, peach,
-pepper, potato, raspberry, soybean, squash, strawberry, tomato) at ~93% val
-accuracy. `/api/detect` returns both a pest result and a disease result; the
-Capture panel shows both. Advice per disease lives in `backend/diseases.py`.
-
-### Officer "Manage" panel
-Logged in as **officer**, the **⚙ Manage** button opens a panel to **register new
-farms** (name, crop, phone, GPS) and **see all registered users** with role
-badges. New farms immediately appear on the map and are checked against active
-risk zones. This is the officer's maintenance role, visible on screen.
-
-### Detector modes (auto-selected, shown in the header badge)
-1. **`yolo-custom`** — our **trained pest model** at `models/best.pt` loads first.
-   Its 29 species map to farmer-facing advice via `species.DATASET_TO_KB`.
-2. **`yolo-base` / `yolo-base+assist`** — if no `best.pt`, a base YOLOv8n runs
-   (real boxes); when it finds nothing on a pest photo it assists with the
-   simulated pest detector so a report still lands.
-3. **`simulated`** — if PyTorch/ultralytics aren't installed at all, a
-   deterministic detector keeps the whole Layer-2 pipeline working for the demo.
-
-### Train your own model (already done once)
+### Verify all judging criteria
 ```bash
-python prepare_dataset.py   # downloads + converts Francesco/pests-2xlvx to YOLO format
-python train.py             # YOLOv8n + field-augmentation -> installs models/best.pt
+python verify_rubric.py      # prints a 12/12 pass report
 ```
-The shipped `models/best.pt` was trained 15 epochs on 500 images (CPU) as a
-**proof-of-pipeline checkpoint** — it detects and maps species correctly but is
-low-accuracy by design. For competition accuracy, raise `N_TRAIN` (in
-`prepare_dataset.py`) to a few thousand and `--epochs` on a GPU. Because the
-checkpoint is under-confident, the custom model runs at a low confidence gate
-(`PESTWATCH_CONF_CUSTOM`, default 0.10) so its real detections surface.
 
-## Demo script (what to show the judges)
-1. Load the page → an outbreak is already on the map (red cluster + orange risk
-   ring), farms inside the ring are red, alerts populate the right panel.
-2. Upload a photo at a location on the ring's edge → boxes drawn, report added.
-3. Add 1–2 more nearby → **the cluster grows, the ring expands, new farms light
-   up** and receive alerts. That's the system tracking a spreading front.
-4. Read one alert aloud — it names the pest, distance & direction, recency, what
-   to inspect, and the exact control measure. *An outcome, not a text description.*
+## Train your own models (optional — already done once)
 
-## Honest limitations (state them openly)
+```bash
+python prepare_dataset.py && python train.py            # pest detector  -> models/best.pt
+python prepare_disease.py && python train_disease.py    # disease model  -> models/disease_best.pt
+```
+
+## Deploy to the cloud
+
+Everything is prepared (`Dockerfile`, `requirements-deploy.txt`, `.dockerignore`).
+See **[DEPLOY.md](DEPLOY.md)** — the live instance runs on Render from this repo's
+Dockerfile. To rebuild the Android APK against your own URL, set `server.url` in
+`capacitor.config.json` and run `build_apk.bat`.
+
+## Project structure
+
+```
+backend/    app.py · detector.py · disease_classifier.py · clustering.py
+            store.py · species.py · diseases.py · augment.py · auth.py · seed.py · geo.py
+frontend/   index.html · app.js · i18n.js · styles.css · manifest.json · sw.js
+android/    Capacitor Android project (build with build_apk.bat)
+models/     best.pt (pest) · disease_best.pt (disease)
+Dockerfile · DEPLOY.md · verify_rubric.py · run.py
+```
+
+## Judging rubric (Track 3 — Computer Vision)
+
+| # | Criterion | How PestWatch meets it |
+|---|---|---|
+| 1 | Input Stream | Image **and** video |
+| 2 | Vision Pipeline | Two real models: YOLOv8 detector + YOLOv8-cls classifier |
+| 3 | Automated Understanding | Detection (pests) **+** classification (36 diseases) |
+| 4 | Measurable Output | Boxes, labels, confidence, instance counts, disease labels |
+| 5 | Technical Depth | 2 trained models + DBSCAN + risk projection + alerting + auth |
+| 6 | Reliability | Bad input → 400, auth → 401, role-gating → 403, model fallbacks |
+| 7 | Innovation | Layer-2 outbreak intelligence + dual pest/disease + bilingual |
+| 8 | Impact | District early warning; fits the govt. agri-extension system |
+| 9 | Demo | Live map, two-model results, role views, video, deployed |
+
+## Honest limitations
+
 - Cluster reliability scales with participation; sparse areas degrade to
   single-report identification.
-- Spread projection is proximity-based — it does not yet model wind direction or
-  species-specific dispersal behaviour.
-- Accuracy is bounded by training-data diversity; visually similar species remain
-  an error source.
-- Supports agronomic decisions — does not replace an entomologist.
+- Spread projection is proximity-based (no wind/corridor modelling yet).
+- The shipped models are compact hackathon checkpoints — accurate enough to
+  demo, not production-grade; more data + epochs on a GPU improves them with the
+  same scripts.
+- It supports agronomic decisions; it does not replace an entomologist.
 
-## Stack
-FastAPI · YOLOv8/PyTorch · OpenCV · scikit-learn (DBSCAN) · SQLite · Leaflet.
-Everything except FastAPI is named in the official stack.
+## License
 
-## Project layout
-```
-backend/   app.py · detector.py · augment.py · clustering.py · store.py · species.py · seed.py · geo.py
-frontend/  index.html · styles.css · app.js
-train.py   optional YOLO fine-tuning with the augmentation pipeline
-run.py     start the server
-```
+MIT — see [LICENSE](LICENSE).
