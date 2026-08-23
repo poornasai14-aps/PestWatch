@@ -1,0 +1,47 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# --- Data / runtime (regenerated; too large or machine-specific) ---
+data/
+uploads/
+datasets/
+runs/
+*.db
+
+# --- Training/demo image sets (bulky; re-downloadable via the fetch scripts) ---
+samples_real/
+samples_test/
+
+# --- Node / Capacitor build artifacts ---
+node_modules/
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/
+android/local.properties
+.gradle/
+
+# --- Auto-downloaded base model weights (ultralytics fetches these) ---
+/yolov8n.pt
+/yolov8n-cls.pt
+
+# --- Built APK (LAN-specific; rebuild with build_apk.bat) ---
+*.apk
+
+# --- Original hackathon handout files (not part of the app) ---
+DOMAIN.jpeg
+*.pdf
+*.xlsx
+~$*
+
+# --- Logs / OS ---
+*.log
+Thumbs.db
+.DS_Store
+
+# Keep: backend/, frontend/, models/, Dockerfile, deploy files, android/ source,
+# PestWatch.apk (so people can download the app).

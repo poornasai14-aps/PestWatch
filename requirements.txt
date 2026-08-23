@@ -1,0 +1,15 @@
+# Core web + data (already lightweight)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+pillow>=10.0
+numpy>=1.26
+scikit-learn>=1.3
+
+# Vision layer (real YOLO). Optional at runtime — the app falls back to a
+# deterministic simulated detector if these are not installed.
+ultralytics>=8.1
+opencv-python-headless>=4.9
+
+# Optional spatial helpers
+shapely>=2.0
