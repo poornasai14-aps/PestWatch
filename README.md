@@ -1,3 +1,5 @@
+![PestWatch](docs/banner.png)
+
 # 🐛 PestWatch — Hyper-Local Crop Pest & Disease Early-Warning
 
 > One farmer's photo helps one farmer. **PestWatch turns a hundred photos into a
@@ -52,6 +54,14 @@ flowchart LR
   (species dispersal × cluster intensity × recency); and registered farms inside
   that radius get a concrete alert — *what pest, how far, which direction, how
   urgent, and what to do.*
+
+## Screenshots
+
+<!-- Replace the placeholder images in docs/ with real screenshots (same filenames). -->
+| | |
+|:--:|:--:|
+| ![Login](docs/01-login.png) | ![Dashboard](docs/02-dashboard.png) |
+| ![Detection](docs/03-detection.png) | ![Farmer view](docs/04-farmer.png) |
 
 ## Features
 
