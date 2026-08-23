@@ -33,7 +33,11 @@ class DiseaseClassifier:
             from ultralytics import YOLO
             self.model = YOLO(MODEL_PATH)
             self.available = True
-        except Exception:
+        except Exception as e:
+            import traceback
+            print("[disease] model load failed:", repr(e), "path exists:",
+                  os.path.exists(MODEL_PATH), flush=True)
+            traceback.print_exc()
             self.model = None
             self.available = False
 

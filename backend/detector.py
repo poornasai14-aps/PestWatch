@@ -45,7 +45,10 @@ class Detector:
     def _load(self):
         try:
             from ultralytics import YOLO  # noqa
-        except Exception:
+        except Exception as e:
+            import traceback
+            print("[detector] ultralytics import failed -> simulated:", repr(e), flush=True)
+            traceback.print_exc()
             self.mode = "simulated"
             return
 
@@ -72,7 +75,10 @@ class Detector:
             from ultralytics import YOLO
             self.model = YOLO("yolov8n.pt")
             self.mode = "yolo-base"
-        except Exception:
+        except Exception as e:
+            import traceback
+            print("[detector] model load failed -> simulated:", repr(e), flush=True)
+            traceback.print_exc()
             self.model = None
             self.mode = "simulated"
 
